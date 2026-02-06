@@ -9,12 +9,12 @@ import os
 import mysql.connector
 from dotenv import load_dotenv
 
-"""
-모듈 목적
-- Streamlit UI에서 사용하는 '리콜 조회/필터/통계' 기능을 DB 레이어로 분리하여 관리한다.
-- UI는 이 모듈을 호출해 데이터만 받아 렌더링하며, SQL/DB 연결 세부 구현은 숨긴다.
-- 필터 조건을 공통 WHERE 빌더로 표준화하여 유지보수성과 일관성을 확보한다.
-"""
+# ============================================================
+# 모듈 목적
+# - Streamlit UI에서 사용하는 '리콜 조회/필터/통계' 기능을 DB 레이어로 분리하여 관리한다.
+# - UI는 이 모듈을 호출해 데이터만 받아 렌더링하며, SQL/DB 연결 세부 구현은 숨긴다.
+# - 필터 조건을 공통 WHERE 빌더로 표준화하여 유지보수성과 일관성을 확보한다.
+# ============================================================
 
 # ============================================================
 # 1) DB CONFIG
@@ -199,8 +199,9 @@ def fetch_recalls(
                 cursor.execute(sql, tuple(params))
                 for row in cursor.fetchall():
                     out.append(RecallView(*row))
+    # - DB 레이어에서 예외를 RuntimeError로 래핑하면, 에러 핸들링이 쉬워짐
     except mysql.connector.Error as err:
-        raise RuntimeError(f"DB 오류(fetch_recalls): {err}") # - DB 레이어에서 예외를 RuntimeError로 래핑하면, 에러 핸들링이 쉬워짐
+        raise RuntimeError(f"DB 오류(fetch_recalls): {err}")
 
     return out
 
@@ -283,8 +284,9 @@ def fetch_year_range() -> Tuple[int, int]:
             with conn.cursor() as cursor:
                 cursor.execute(sql)
                 row = cursor.fetchone()
+                # - UI가 연도 옵션을 렌더링하지 못하면 화면이 깨질 수 있어 안전한 기본값 제공
                 if not row or row[0] is None or row[1] is None:
-                    return 2000, datetime.now().year # - UI가 연도 옵션을 렌더링하지 못하면 화면이 깨질 수 있어 안전한 기본값 제공
+                    return 2000, datetime.now().year
                 return int(row[0]), int(row[1])
     except mysql.connector.Error as err:
         raise RuntimeError(f"DB 오류(fetch_year_range): {err}")
